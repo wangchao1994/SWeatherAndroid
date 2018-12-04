@@ -4,7 +4,7 @@
     <group android:id="@+id/other">
         <item android:id="@+id/nav_item_wan_android"
             android:icon="@drawable/ic_wan_android"
-            android:title="@string/navigation_drawer_manage"
+            android:title="@string/app_name"
             android:checkable="true"
             android:checked="true" />
 
@@ -15,7 +15,7 @@
 
         <item android:id="@+id/nav_item_setting"
             android:icon="@drawable/ic_setting"
-              android:title="@string/app_name"
+              android:title="@string/navigation_drawer_manage"
             android:checkable="true" />
     </group>
 </menu>

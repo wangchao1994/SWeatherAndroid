@@ -11,18 +11,17 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.android.sweatherapplication.db.DBHelper;
 import com.android.sweatherapplication.event.LocalInfoEvent;
 import com.android.sweatherapplication.adapter.FragAdapter;
 import com.android.sweatherapplication.model.CityInfo;
-import com.baidu.location.BDAbstractLocationListener;
-import com.baidu.location.BDLocation;
-import com.baidu.location.LocationClient;
-import com.baidu.location.LocationClientOption;
 
-import org.greenrobot.eventbus.EventBus;
+
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.litepal.LitePal;
@@ -35,15 +34,16 @@ import me.relex.circleindicator.CircleIndicator;
 public class MainActivity extends BaseActivity{
 
     private DrawerLayout mDrawerLayout;
-    private Toolbar mToorbar;
+    private Toolbar mToolbar;
     private TextView mTitleText;
     private ViewPager mViewPager;
     private NavigationView mNavigationView;
     private CircleIndicator mCircleIndicator;
-    private LocationClient locationClient;
-    private MyLocationListener myLocationListener;
     private List<WeatherFragment> weatherFragmentList;
     private FragAdapter mWeahterAdapter;
+    private AMapLocationClient locationClient;
+    private AMapLocationClientOption mLocationOption;
+
     @Override
     protected void getLayoutId() {
         setContentView(R.layout.activity_main);
@@ -52,6 +52,78 @@ public class MainActivity extends BaseActivity{
         initNavigationView();
         initLocationOption();
     }
+
+    private void initLocationOption() {
+        //初始化client
+        locationClient = new AMapLocationClient(mSApplication);
+        mLocationOption = getDefaultOption();
+        //设置定位参数
+        locationClient.setLocationOption(mLocationOption);
+        // 设置定位监听
+        locationClient.setLocationListener(mlocationListener);
+        // 启动定位
+        locationClient.startLocation();
+    }
+    /**
+     * 默认的定位参数
+     *
+     */
+    private AMapLocationClientOption getDefaultOption(){
+        AMapLocationClientOption mOption = new AMapLocationClientOption();
+        //可选，设置定位模式，可选的模式有高精度、仅设备、仅网络。默认为高精度模式
+        mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+        //可选，设置是否gps优先，只在高精度模式下有效。默认关闭
+        mOption.setGpsFirst(false);
+        //可选，设置网络请求超时时间。默认为30秒。在仅设备模式下无效
+        mOption.setHttpTimeOut(30000);
+        //可选，设置定位间隔。默认为2秒
+        mOption.setInterval(2000);
+        //可选，设置是否返回逆地理地址信息。默认是true
+        mOption.setNeedAddress(true);
+        //可选，设置是否单次定位。默认是false
+        mOption.setOnceLocation(false);
+        //可选，设置是否等待wifi刷新，默认为false.如果设置为true,会自动变为单次定位，持续定位时不要使用
+        mOption.setOnceLocationLatest(false);
+        //可选， 设置网络请求的协议。可选HTTP或者HTTPS。默认为HTTP
+        AMapLocationClientOption.setLocationProtocol(AMapLocationClientOption.AMapLocationProtocol.HTTP);
+        //可选，设置是否使用传感器。默认是false
+        mOption.setSensorEnable(false);
+        //可选，设置是否开启wifi扫描。默认为true，如果设置为false会同时停止主动刷新，停止以后完全依赖于系统刷新，定位位置可能存在误差
+        mOption.setWifiScan(true);
+        //可选，设置是否使用缓存定位，默认为true
+        mOption.setLocationCacheEnable(true);
+        return mOption;
+    }
+
+    /**
+     * 定位监听
+     */
+    AMapLocationListener mlocationListener = new AMapLocationListener() {
+
+        @Override
+        public void onLocationChanged(AMapLocation amapLocation) {
+            if (null != amapLocation ) {
+                /**
+                 * 根据高德定位SDK获取经纬度
+                 * 获取当地位置的经纬度
+                 * 解析定位结果
+                 * */
+                if (amapLocation != null) {
+                    if (amapLocation.getErrorCode() == 0) {
+//可在其中解析amapLocation获取相应内容。
+                    }else {
+                        //定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
+                        Log.e("AmapError","location Error, ErrCode:"
+                                + amapLocation.getErrorCode() + ", errInfo:"
+                                + amapLocation.getErrorInfo());
+                    }
+                }
+                Log.d("wangchao","amapLocation city=========="+amapLocation.getErrorInfo());
+                locationClient.stopLocation();
+            }
+        }
+    };
+
     @Override
     protected void initEventData() {
         initFragmentsData();
@@ -85,7 +157,7 @@ public class MainActivity extends BaseActivity{
         int cityId = mSApplication.getCityId();
         mViewPager.setCurrentItem(cityId);
         mViewPager.setOffscreenPageLimit(weatherFragmentList.size());
-        //指示器1
+        //指示器
         if (weatherInfosList.size() == 1){
             mCircleIndicator.setVisibility(View.INVISIBLE);
         }else{
@@ -94,12 +166,9 @@ public class MainActivity extends BaseActivity{
             mWeahterAdapter.registerDataSetObserver(mCircleIndicator.getDataSetObserver());
         }
     }
-
     private void initToolBarSet() {
-
-
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, mDrawerLayout, mToorbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
+                this, mDrawerLayout, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
             @Override
             public void onDrawerSlide(View drawerView, float slideOffset) {
                 //获取mDrawerLayout中的第一个子布局，也就是布局中的RelativeLayout
@@ -151,7 +220,7 @@ public class MainActivity extends BaseActivity{
                 .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
-                        Toast.makeText(mSApplication,"3",Toast.LENGTH_SHORT).show();
+                        startActivity(new Intent(MainActivity.this,CityManagerActivity.class));
                         mDrawerLayout.closeDrawers();
                         return true;
                     }
@@ -160,7 +229,7 @@ public class MainActivity extends BaseActivity{
 
     private void initView() {
         mDrawerLayout = findViewById(R.id.drawer_layout);
-        mToorbar = findViewById(R.id.common_toolbar);
+        mToolbar = findViewById(R.id.common_toolbar);
         mTitleText = findViewById(R.id.common_toolbar_title_tv);
         mViewPager = findViewById(R.id.main_viewpager);
         mNavigationView = findViewById(R.id.nav_view);
@@ -170,8 +239,9 @@ public class MainActivity extends BaseActivity{
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (myLocationListener != null)
-        locationClient.unRegisterLocationListener(myLocationListener);
+        if (mlocationListener != null){
+            locationClient.unRegisterLocationListener(mlocationListener);
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -186,66 +256,5 @@ public class MainActivity extends BaseActivity{
             }
         }
     }
-    /**
-     * 实现定位回调
-     */
-    public class MyLocationListener extends BDAbstractLocationListener{
-        @Override
-        public void onReceiveLocation(BDLocation location){
-            //获取纬度信息
-            double latitude = location.getLatitude();
-            //获取经度信息
-            double longitude = location.getLongitude();
-            Log.d("wangchao","latitude=="+latitude+"    longitude="+longitude);
-            Log.d("wangchao","latitude=="+location.getDistrict());//浦东新区
-            //EventBus.getDefault().post(new LocalInfoEvent(location.getCity(),location.getDistrict()));
-            EventBus.getDefault().post(new LocalInfoEvent("Shanghai"));
-            locationClient.stop();
-        }
-    }
-    /**
-     * 初始化定位参数配置
-     */
-    private void initLocationOption() {
-        //定位服务的客户端。宿主程序在客户端声明此类，并调用，目前只支持在主线程中启动
-        locationClient = new LocationClient(mSApplication);
-        //声明LocationClient类实例并配置定位参数
-        LocationClientOption locationOption = new LocationClientOption();
-        myLocationListener = new MyLocationListener();
-        //注册监听函数
-        locationClient.registerLocationListener(myLocationListener);
-        //可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
-        locationOption.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
-        //可选，默认gcj02，设置返回的定位结果坐标系，如果配合百度地图使用，建议设置为bd09ll;
-        locationOption.setCoorType("bd09ll");
-        //可选，默认0，即仅定位一次，设置发起连续定位请求的间隔需要大于等于1000ms才是有效的
-        locationOption.setScanSpan(1000);
-        //可选，设置是否需要地址信息，默认不需要
-        locationOption.setIsNeedAddress(true);
-        //可选，设置是否需要地址描述
-        locationOption.setIsNeedLocationDescribe(true);
-        //可选，设置是否需要设备方向结果
-        locationOption.setNeedDeviceDirect(false);
-        //可选，默认false，设置是否当gps有效时按照1S1次频率输出GPS结果
-        locationOption.setLocationNotify(true);
-        //可选，默认true，定位SDK内部是一个SERVICE，并放到了独立进程，设置是否在stop的时候杀死这个进程，默认不杀死
-        locationOption.setIgnoreKillProcess(true);
-        //可选，默认false，设置是否需要位置语义化结果，可以在BDLocation.getLocationDescribe里得到，结果类似于“在北京天安门附近”
-        locationOption.setIsNeedLocationDescribe(true);
-        //可选，默认false，设置是否需要POI结果，可以在BDLocation.getPoiList里得到
-        locationOption.setIsNeedLocationPoiList(true);
-        //可选，默认false，设置是否收集CRASH信息，默认收集
-        locationOption.SetIgnoreCacheException(false);
-        //可选，默认false，设置是否开启Gps定位
-        locationOption.setOpenGps(true);
-        //可选，默认false，设置定位时是否需要海拔信息，默认不需要，除基础定位版本都可用
-        locationOption.setIsNeedAltitude(false);
-        //设置打开自动回调位置模式，该开关打开后，期间只要定位SDK检测到位置变化就会主动回调给开发者，该模式下开发者无需再关心定位间隔是多少，定位SDK本身发现位置变化就会及时回调给开发者
-        locationOption.setOpenAutoNotifyMode();
-        //设置打开自动回调位置模式，该开关打开后，期间只要定位SDK检测到位置变化就会主动回调给开发者
-        locationOption.setOpenAutoNotifyMode(3000,1, LocationClientOption.LOC_SENSITIVITY_HIGHT);
-        locationClient.setLocOption(locationOption);
-        //开始定位
-        locationClient.start();
-    }
+
 }
