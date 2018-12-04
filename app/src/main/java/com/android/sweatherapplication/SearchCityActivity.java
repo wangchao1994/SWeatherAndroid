@@ -10,6 +10,9 @@ import com.android.sweatherapplication.model.CityContent;
 import com.android.sweatherapplication.model.WeatherContent;
 import com.android.sweatherapplication.net.RetrofitApi;
 import com.android.sweatherapplication.net.RetrofitHelper;
+import com.android.sweatherapplication.view.CommonDialogFragment;
+import com.android.sweatherapplication.view.DialogFragmentHelper;
+import com.android.sweatherapplication.view.IDialogResultListener;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -73,7 +76,16 @@ public class SearchCityActivity extends BaseActivity implements View.OnClickList
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.ib_add_city:
+                DialogFragmentHelper.showConfirmDialog(getSupportFragmentManager(), "Add To MainPage？", new IDialogResultListener<Integer>() {
+                    @Override
+                    public void onDataResult(Integer result) {
 
+                    }
+                }, true, new CommonDialogFragment.OnDialogCancelListener() {
+                    @Override
+                    public void onCancel() {
+                    }
+                });
                 break;
         }
     }
