@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">SWeatherApplication</string>
+    <string name="pull_to_refresh_pull_label">下拉刷新…</string>
+    <string name="pull_to_refresh_release_label">放开以刷新…</string>
+    <string name="pull_to_refresh_refreshing_label">正在载入…</string>
+
+
+    <string name="navigation_drawer_manage">Manage City</string>
+    <string name="navigation_drawer_add">Add City</string>
+
+    <string name="navigation_drawer_open">open</string>
+    <string name="navigation_drawer_close">close</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Shanghai</string>
+    <string name="pull_to_refresh">下拉更新</string>
+    <string name="leave_to_refresh">松手可更新…</string>
+    <string name="refreshing">正在更新…</string>
+    <string name="title_activity_city_manager">CityManagerActivity</string>
+
+</resources>

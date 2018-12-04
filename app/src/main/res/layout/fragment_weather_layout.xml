@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.android.mylibrary.pulltorefresh.library.PullToRefreshScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/pull_refresh_scrollview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context=".WeatherFragment">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <TextView
+                android:id="@+id/tv_main_city"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                />
+          <RelativeLayout
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_centerHorizontal="true"
+              android:layout_below="@id/tv_main_city">
+              <TextView
+                  android:id="@+id/tv_main_city_temp"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textColor="@android:color/white"
+                  android:textSize="16sp" />
+              <TextView
+                  android:id="@+id/tv_main_date"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textColor="@android:color/white"
+                  android:layout_below="@id/tv_main_city_temp"
+                  android:textSize="16sp"/>
+          </RelativeLayout>
+        </RelativeLayout>
+</com.android.mylibrary.pulltorefresh.library.PullToRefreshScrollView>
