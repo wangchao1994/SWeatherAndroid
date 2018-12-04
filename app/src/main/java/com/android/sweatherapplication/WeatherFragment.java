@@ -55,8 +55,6 @@ public class WeatherFragment extends BaseFragment{
         pullToRefresh();
     }
 
-
-
     @Override
     protected View initView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_weather_layout, container, false);
@@ -83,7 +81,6 @@ public class WeatherFragment extends BaseFragment{
                 updateCityWeather(cityName);
             }
         });
-        //setTopActionabarBg(R.drawable.topactionbar_bg_01);
     }
 
     public void pullToRefresh() {
@@ -114,18 +111,16 @@ public class WeatherFragment extends BaseFragment{
             @Override
             public void run() {
                 RetrofitHelper.getInstance().create(RetrofitApi.class, SWConfig.BASE_URL)
-                        //.getWeatherData("select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\"上海, ak\")")
-                        .getWeatherData("select * from weather.forecast where woeid="+2151849+" and u=\"c\"")                        .subscribeOn(Schedulers.io())
+                        .getWeatherData("select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\""+cityName+", ak\")")
+                        //.getWeatherData("select * from weather.forecast where woeid="+2151849+" and u=\"c\"")                        .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new Subscriber<WeatherContent>() {
                             @Override
                             public void onCompleted() {
                             }
-
                             @Override
                             public void onError(Throwable e) {
                             }
-
                             @Override
                             public void onNext(WeatherContent weatherContent) {
                                 String created = weatherContent.getQuery().getCreated();
@@ -137,6 +132,13 @@ public class WeatherFragment extends BaseFragment{
                         });
             }
         }).start();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onQueryEvent(QueryBeanEvent queryBeanEvent){
+        Log.d("wangchao","queryBeanEvent==="+queryBeanEvent.mQueryBean.getCreated());
+        mTvCityTemp.setText(queryBeanEvent.mQueryBean.getResults().getChannel().getItem().getCondition().getTemp());
+        mTvCityDate.setText(queryBeanEvent.mQueryBean.getResults().getChannel().getItem().getCondition().getDate());
     }
 
     /**
@@ -152,6 +154,7 @@ public class WeatherFragment extends BaseFragment{
         // 间隔3秒内不再自动更新
         return timeD <= 3000;
     }
+
     /**
      * stopAnimation
      */
@@ -159,11 +162,7 @@ public class WeatherFragment extends BaseFragment{
         mPullToRefreshScrollView.onRefreshComplete();
         mLastActiveUpdateTime = SystemClock.elapsedRealtime();
     }
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onQueryEvent(QueryBeanEvent queryBeanEvent){
-        Log.d("wangchao","queryBeanEvent==="+queryBeanEvent.mQueryBean.getCreated());
-        mTvCityTemp.setText(queryBeanEvent.mQueryBean.getResults().getChannel().getItem().getCondition().getTemp());
-        mTvCityDate.setText(queryBeanEvent.mQueryBean.getResults().getChannel().getItem().getCondition().getDate());
-    }
+
+
 
 }

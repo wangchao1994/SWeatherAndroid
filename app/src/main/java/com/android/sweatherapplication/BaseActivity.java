@@ -30,12 +30,12 @@ public abstract class BaseActivity extends AppCompatActivity{
         EventBus.getDefault().register(this);
         AppManager.getAppManager().addActivity(this);
         getLayoutId();
-        initEventData();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        initEventData();
         hasNetWorkChangeStatus(AppNetworkMgr.isNetworkConnected(mSApplication));
     }
 

@@ -5,8 +5,10 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.android.sweatherapplication.db.DBHelper;
 import com.android.sweatherapplication.event.SearchCityEvent;
 import com.android.sweatherapplication.model.CityContent;
+import com.android.sweatherapplication.model.CityInfo;
 import com.android.sweatherapplication.model.WeatherContent;
 import com.android.sweatherapplication.net.RetrofitApi;
 import com.android.sweatherapplication.net.RetrofitHelper;
@@ -26,6 +28,7 @@ public class SearchCityActivity extends BaseActivity implements View.OnClickList
     private TextView tv_search_city;
     private String woeidString;
     private ImageButton mIbAddCity;
+    private String searchCityName;
     @Override
     protected void getLayoutId() {
         setContentView(R.layout.activity_search_city);
@@ -58,14 +61,24 @@ public class SearchCityActivity extends BaseActivity implements View.OnClickList
                             }
                             @Override
                             public void onNext(WeatherContent weatherContent) {
-                                String city = weatherContent.getQuery().getResults().getChannel().getLocation().getCity();
-                                Log.d("wangchao","onSearchCityEvent-----------"+city);
-                                tv_search_city.setText(city);
+                               parseWeatherData(weatherContent);
                             }
                         });
             }
         }).start();
     }
+
+    /**
+     * 解析数据
+     * @param weatherContent
+     */
+    private void parseWeatherData(WeatherContent weatherContent) {
+        String city = weatherContent.getQuery().getResults().getChannel().getLocation().getCity();
+        Log.d("wangchao","onSearchCityEvent-----------"+city);
+        searchCityName = city;
+        tv_search_city.setText(searchCityName);
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN,sticky = true)
     public void onSearchCityEvent(SearchCityEvent searchCityEvent){
         woeidString = searchCityEvent.woeid;
@@ -79,7 +92,9 @@ public class SearchCityActivity extends BaseActivity implements View.OnClickList
                 DialogFragmentHelper.showConfirmDialog(getSupportFragmentManager(), "Add To MainPage？", new IDialogResultListener<Integer>() {
                     @Override
                     public void onDataResult(Integer result) {
-
+                        if (!"".equals(searchCityName) && searchCityName != null){
+                            DBHelper.saveCity(new CityInfo(),searchCityName);
+                        }
                     }
                 }, true, new CommonDialogFragment.OnDialogCancelListener() {
                     @Override

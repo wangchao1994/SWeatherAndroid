@@ -47,13 +47,13 @@ public class MainActivity extends BaseActivity{
     @Override
     protected void getLayoutId() {
         setContentView(R.layout.activity_main);
-    }
-    @Override
-    protected void initEventData() {
         initView();
         initToolBarSet();
         initNavigationView();
         initLocationOption();
+    }
+    @Override
+    protected void initEventData() {
         initFragmentsData();
     }
 
@@ -96,6 +96,8 @@ public class MainActivity extends BaseActivity{
     }
 
     private void initToolBarSet() {
+
+
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, mDrawerLayout, mToorbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
             @Override
