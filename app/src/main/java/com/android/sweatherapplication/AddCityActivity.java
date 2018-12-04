@@ -81,6 +81,11 @@ public class AddCityActivity extends BaseActivity implements View.OnClickListene
     }
 
     @Override
+    protected void onDestoryEvent() {
+
+    }
+
+    @Override
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.iv_delete:

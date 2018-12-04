@@ -67,7 +67,6 @@ public class SearchCityActivity extends BaseActivity implements View.OnClickList
             }
         }).start();
     }
-
     /**
      * 解析数据
      * @param weatherContent
@@ -103,5 +102,9 @@ public class SearchCityActivity extends BaseActivity implements View.OnClickList
                 });
                 break;
         }
+    }
+    @Override
+    protected void onDestoryEvent() {
+
     }
 }

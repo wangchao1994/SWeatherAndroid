@@ -33,7 +33,6 @@
     -->
     <list>
         <mapping class="com.android.sweatherapplication.model.CityInfo" />
-        <mapping class="com.android.sweatherapplication.model.WeatherFutureInfo" />
     </list>
 
     <!--

@@ -56,6 +56,7 @@ public abstract class BaseActivity extends AppCompatActivity{
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        onDestoryEvent();
         EventBus.getDefault().unregister(this);
         AppManager.getAppManager().removeActivity(this);
     }
@@ -65,7 +66,9 @@ public abstract class BaseActivity extends AppCompatActivity{
         super.finish();
         //处理全局view结束remove
     }
+
     protected abstract void getLayoutId();
     protected abstract void initEventData();
+    protected abstract void onDestoryEvent();
 
 }

@@ -1,7 +1,15 @@
 package com.android.sweatherapplication;
 
+import android.Manifest;
+import android.annotation.TargetApi;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -22,17 +30,33 @@ import com.android.sweatherapplication.adapter.FragAdapter;
 import com.android.sweatherapplication.model.CityInfo;
 
 
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.litepal.LitePal;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 import me.relex.circleindicator.CircleIndicator;
 
 public class MainActivity extends BaseActivity{
-
+    /**
+     * 需要进行检测的权限数组
+     */
+    protected String[] needPermissions = {
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.READ_PHONE_STATE
+    };
+    /**
+     * 判断是否需要检测，防止不停的弹框
+     */
+    private boolean isNeedCheck = true;
+    private static final int PERMISSON_REQUESTCODE = 0;
     private DrawerLayout mDrawerLayout;
     private Toolbar mToolbar;
     private TextView mTitleText;
@@ -43,6 +67,7 @@ public class MainActivity extends BaseActivity{
     private FragAdapter mWeahterAdapter;
     private AMapLocationClient locationClient;
     private AMapLocationClientOption mLocationOption;
+    private List<CityInfo> weatherInfosList;
 
     @Override
     protected void getLayoutId() {
@@ -50,7 +75,6 @@ public class MainActivity extends BaseActivity{
         initView();
         initToolBarSet();
         initNavigationView();
-        initLocationOption();
     }
 
     private void initLocationOption() {
@@ -81,7 +105,7 @@ public class MainActivity extends BaseActivity{
         //可选，设置是否返回逆地理地址信息。默认是true
         mOption.setNeedAddress(true);
         //可选，设置是否单次定位。默认是false
-        mOption.setOnceLocation(false);
+        mOption.setOnceLocation(true);
         //可选，设置是否等待wifi刷新，默认为false.如果设置为true,会自动变为单次定位，持续定位时不要使用
         mOption.setOnceLocationLatest(false);
         //可选， 设置网络请求的协议。可选HTTP或者HTTPS。默认为HTTP
@@ -102,36 +126,90 @@ public class MainActivity extends BaseActivity{
 
         @Override
         public void onLocationChanged(AMapLocation amapLocation) {
+
             if (null != amapLocation ) {
-                /**
-                 * 根据高德定位SDK获取经纬度
-                 * 获取当地位置的经纬度
-                 * 解析定位结果
-                 * */
-                if (amapLocation != null) {
-                    if (amapLocation.getErrorCode() == 0) {
-//可在其中解析amapLocation获取相应内容。
-                    }else {
-                        //定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
-                        Log.e("AmapError","location Error, ErrCode:"
-                                + amapLocation.getErrorCode() + ", errInfo:"
-                                + amapLocation.getErrorInfo());
-                    }
+                if (amapLocation.getErrorCode() == 0) {
+                    //可在其中解析amapLocation获取相应内容。
+                    EventBus.getDefault().post(new LocalInfoEvent(amapLocation.getCity()));
+                }else {
+                    //定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
+                    Log.e("AmapError","location Error, ErrCode:"
+                            + amapLocation.getErrorCode() + ", errInfo:"
+                            + amapLocation.getErrorInfo());
                 }
-                Log.d("wangchao","amapLocation city=========="+amapLocation.getErrorInfo());
-                locationClient.stopLocation();
+                Log.d("wangchao","amapLocation city=========="+amapLocation.getCity());
             }
         }
     };
 
     @Override
     protected void initEventData() {
+        if (Build.VERSION.SDK_INT >= 23
+                && getApplicationInfo().targetSdkVersion >= 23) {
+            if (isNeedCheck) {
+                checkPermissions(needPermissions);
+            }
+        }
+        initLocationOption();
         initFragmentsData();
+    }
+
+    @Override
+    protected void onDestoryEvent() {
+        if (locationClient != null){
+            locationClient.stopLocation();
+        }
+        if (mlocationListener != null){
+            locationClient.unRegisterLocationListener(mlocationListener);
+            locationClient = null;
+        }
+    }
+
+    /**
+     * check permission
+     * @param permissions
+     */
+    private void checkPermissions(String... permissions) {
+        try {
+            if (Build.VERSION.SDK_INT >= 23
+                    && getApplicationInfo().targetSdkVersion >= 23) {
+                List<String> needRequestPermissonList = findDeniedPermissions(permissions);
+                if (null != needRequestPermissonList
+                        && needRequestPermissonList.size() > 0) {
+                    String[] array = needRequestPermissonList.toArray(new String[needRequestPermissonList.size()]);
+                    Method method = getClass().getMethod("requestPermissions", new Class[]{String[].class,
+                            int.class});
+
+                    method.invoke(this, array, PERMISSON_REQUESTCODE);
+                }
+            }
+        } catch (Throwable e) {
+        }
+    }
+    private List<String> findDeniedPermissions(String[] permissions) {
+        List<String> needRequestPermissonList = new ArrayList<String>();
+        if (Build.VERSION.SDK_INT >= 23
+                && getApplicationInfo().targetSdkVersion >= 23){
+            try {
+                for (String perm : permissions) {
+                    Method checkSelfMethod = getClass().getMethod("checkSelfPermission", String.class);
+                    Method shouldShowRequestPermissionRationaleMethod = getClass().getMethod("shouldShowRequestPermissionRationale",
+                            String.class);
+                    if ((Integer)checkSelfMethod.invoke(this, perm) != PackageManager.PERMISSION_GRANTED
+                            || (Boolean)shouldShowRequestPermissionRationaleMethod.invoke(this, perm)) {
+                        needRequestPermissonList.add(perm);
+                    }
+                }
+            } catch (Throwable e) {
+
+            }
+        }
+        return needRequestPermissonList;
     }
 
     private void initFragmentsData() {
         weatherFragmentList = new ArrayList<>();
-        List<CityInfo> weatherInfosList = LitePal.findAll(CityInfo.class);
+        weatherInfosList = DBHelper.getListCityInfo();
         Log.d("wangchao","weatherInfosList===="+weatherInfosList.size());
         for (int i = 0;i<weatherInfosList.size();i++){
             if (i == 0){
@@ -153,18 +231,7 @@ public class MainActivity extends BaseActivity{
         mWeahterAdapter = new FragAdapter(getSupportFragmentManager(),weatherFragmentList);
         mViewPager.setAdapter(mWeahterAdapter);
         mWeahterAdapter.notifyDataSetChanged();
-
-        int cityId = mSApplication.getCityId();
-        mViewPager.setCurrentItem(cityId);
-        mViewPager.setOffscreenPageLimit(weatherFragmentList.size());
-        //指示器
-        if (weatherInfosList.size() == 1){
-            mCircleIndicator.setVisibility(View.INVISIBLE);
-        }else{
-            mCircleIndicator.setVisibility(View.VISIBLE);
-            mCircleIndicator.setViewPager(mViewPager);
-            mWeahterAdapter.registerDataSetObserver(mCircleIndicator.getDataSetObserver());
-        }
+        setCircleIndicatorLader();
     }
     private void initToolBarSet() {
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -196,6 +263,22 @@ public class MainActivity extends BaseActivity{
         mDrawerLayout.addDrawerListener(toggle);
     }
 
+    /**
+     * 设置指示器
+     */
+    public void setCircleIndicatorLader(){
+        int cityId = mSApplication.getCityId();
+        mViewPager.setCurrentItem(cityId);
+        mViewPager.setOffscreenPageLimit(weatherFragmentList.size());
+        //指示器
+        if (weatherInfosList.size() == 1){
+            mCircleIndicator.setVisibility(View.INVISIBLE);
+        }else{
+            mCircleIndicator.setVisibility(View.VISIBLE);
+            mCircleIndicator.setViewPager(mViewPager);
+            mWeahterAdapter.registerDataSetObserver(mCircleIndicator.getDataSetObserver());
+        }
+    }
     private void initNavigationView() {
         mNavigationView.getMenu().findItem(R.id.nav_item_wan_android)
                 .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -236,14 +319,6 @@ public class MainActivity extends BaseActivity{
         mCircleIndicator = findViewById(R.id.indicator);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mlocationListener != null){
-            locationClient.unRegisterLocationListener(mlocationListener);
-        }
-    }
-
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onLocalInfoEvent(LocalInfoEvent localInfoEvent){
         if (weatherFragmentList != null){
@@ -252,9 +327,76 @@ public class MainActivity extends BaseActivity{
             //save city
             if (localInfoEvent.city != null){
                 DBHelper.saveCity(new CityInfo(),localInfoEvent.city);
+                notifyAdapteData();
+                //通知
                 weatherFragmentList.get(0).pullToRefresh();
             }
         }
     }
 
+    /**
+     * location notify data
+     */
+    private void notifyAdapteData() {
+        weatherInfosList = DBHelper.getListCityInfo();
+        mWeahterAdapter.notifyDataSetChanged();
+        setCircleIndicatorLader();
+    }
+    /**
+     * 检测是否所有的权限都已经授权
+     * @param grantResults
+     * @return
+     * @since 2.5.0
+     *
+     */
+    private boolean verifyPermissions(int[] grantResults) {
+        for (int result : grantResults) {
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+            initLocationOption();
+        }
+        return true;
+    }
+
+    @TargetApi(23)
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions, int[] paramArrayOfInt) {
+        if (requestCode == PERMISSON_REQUESTCODE) {
+            if (!verifyPermissions(paramArrayOfInt)) {
+                showMissingPermissionDialog();
+                isNeedCheck = false;
+            }
+        }
+    }
+    private void showMissingPermissionDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.notifyTitle);
+        builder.setMessage(R.string.notifyMsg);
+
+        // 拒绝, 退出应用
+        builder.setNegativeButton(R.string.cancel,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                });
+        builder.setPositiveButton(R.string.setting,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startAppSettings();
+                    }
+                });
+        builder.setCancelable(false);
+
+        builder.show();
+    }
+    private void startAppSettings() {
+        Intent intent = new Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        intent.setData(Uri.parse("package:" + getPackageName()));
+        startActivity(intent);
+    }
 }

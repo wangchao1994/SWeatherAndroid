@@ -16,4 +16,9 @@ public class CityManagerActivity extends BaseActivity {
     protected void initEventData() {
 
     }
+
+    @Override
+    protected void onDestoryEvent() {
+
+    }
 }
