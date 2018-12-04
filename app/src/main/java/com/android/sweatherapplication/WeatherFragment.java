@@ -69,7 +69,6 @@ public class WeatherFragment extends BaseFragment{
         mPullToRefreshScrollView = view.findViewById(R.id.pull_refresh_scrollview);
         setPullToRefresh();
     }
-
     private void setPullToRefresh() {
         mPullToRefreshScrollView.getLoadingLayoutProxy().setPullLabel(getString(R.string.pull_to_refresh));
         mPullToRefreshScrollView.getLoadingLayoutProxy().setRefreshingLabel(getString(R.string.refreshing));
@@ -84,6 +83,7 @@ public class WeatherFragment extends BaseFragment{
     }
 
     public void pullToRefresh() {
+        Log.d("pull","pullToRefresh--------------");
         new Handler().postDelayed(mRunToRresh,500);
     }
 
@@ -93,12 +93,12 @@ public class WeatherFragment extends BaseFragment{
     Runnable mRunToRresh = new Runnable(){
         @Override
         public void run() {
-           // if (getActivity()!= null &&!getActivity().isFinishing()){
-                if(!hasActiveUpdated()){
+            if (getActivity()!= null &&!getActivity().isFinishing()){
+                if(!hasActiveUpdated() && mPullToRefreshScrollView != null){
                     mPullToRefreshScrollView.setRefreshing();
                     updateCityWeather(cityName);
                 }
-            //}
+            }
         }
     };
     /**
@@ -133,11 +133,11 @@ public class WeatherFragment extends BaseFragment{
             }
         }).start();
     }
-
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onQueryEvent(QueryBeanEvent queryBeanEvent){
+        Log.d("queryBeanEvent","queryBeanEvent========"+queryBeanEvent.mQueryBean.getResults().getChannel().getItem());
         Log.d("wangchao","queryBeanEvent==="+queryBeanEvent.mQueryBean.getCreated());
-        mTvCityTemp.setText(queryBeanEvent.mQueryBean.getResults().getChannel().getItem().getCondition().getTemp());
+        mTvCityTemp.setText(queryBeanEvent.mQueryBean.getResults().getChannel().getItem().getCondition().getText());
         mTvCityDate.setText(queryBeanEvent.mQueryBean.getResults().getChannel().getItem().getCondition().getDate());
     }
 

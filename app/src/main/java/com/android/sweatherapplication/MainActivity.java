@@ -317,6 +317,23 @@ public class MainActivity extends BaseActivity{
         mViewPager = findViewById(R.id.main_viewpager);
         mNavigationView = findViewById(R.id.nav_view);
         mCircleIndicator = findViewById(R.id.indicator);
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                //CityInfo cityInfo = weatherInfosList.get(position);
+                //通知更新页面数据
+                weatherFragmentList.get(position).pullToRefresh();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
