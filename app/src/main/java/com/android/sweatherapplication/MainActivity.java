@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.ViewPager;
@@ -323,10 +324,16 @@ public class MainActivity extends BaseActivity{
             }
 
             @Override
-            public void onPageSelected(int position) {
+            public void onPageSelected(final int position) {
                 //CityInfo cityInfo = weatherInfosList.get(position);
                 //通知更新页面数据
-                weatherFragmentList.get(position).pullToRefresh();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        weatherFragmentList.get(position).pullToRefresh();
+                    }
+                },300);
+
             }
 
             @Override
